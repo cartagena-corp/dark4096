@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import { Direction } from '@/types/game'
 
 interface UseSwipeProps {
@@ -12,26 +12,41 @@ interface UseSwipeProps {
 export function useSwipe({ onMove, enabled, elementRef }: UseSwipeProps) {
   const touchStart = useRef<{ x: number; y: number } | null>(null)
   const lastSwipeTime = useRef(0)
-  const DEBOUNCE_MS = 120
-  const MIN_SWIPE_DISTANCE = 30
+
+  // Latest callback/flag kept in refs so listeners bind exactly once.
+  const onMoveRef = useRef(onMove)
+  const enabledRef = useRef(enabled)
+  onMoveRef.current = onMove
+  enabledRef.current = enabled
+
+  // Short debounce: just enough to avoid a single gesture firing twice,
+  // without swallowing genuine fast consecutive swipes.
+  const DEBOUNCE_MS = 55
+  const MIN_SWIPE_DISTANCE = 24
   const MAX_PERPENDICULAR_RATIO = 2.0
 
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (!enabled) return
-    const touch = e.touches[0]
-    touchStart.current = { x: touch.clientX, y: touch.clientY }
-    e.preventDefault()
-  }, [enabled])
+  useEffect(() => {
+    const el = elementRef.current
+    if (!el) return
 
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    e.preventDefault()
-  }, [])
+    const handleTouchStart = (e: TouchEvent) => {
+      if (!enabledRef.current) return
+      const touch = e.touches[0]
+      touchStart.current = { x: touch.clientX, y: touch.clientY }
+      e.preventDefault()
+    }
 
-  const handleTouchEnd = useCallback(
-    (e: TouchEvent) => {
-      if (!enabled || !touchStart.current) return
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault()
+    }
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!enabledRef.current || !touchStart.current) return
       const now = Date.now()
-      if (now - lastSwipeTime.current < DEBOUNCE_MS) return
+      if (now - lastSwipeTime.current < DEBOUNCE_MS) {
+        touchStart.current = null
+        return
+      }
 
       const touch = e.changedTouches[0]
       const dx = touch.clientX - touchStart.current.x
@@ -59,19 +74,14 @@ export function useSwipe({ onMove, enabled, elementRef }: UseSwipeProps) {
 
       if (direction) {
         lastSwipeTime.current = now
-        onMove(direction)
+        onMoveRef.current(direction)
         // Haptic feedback on supported devices
         if ('vibrate' in navigator) {
-          navigator.vibrate(10)
+          navigator.vibrate(8)
         }
       }
-    },
-    [onMove, enabled]
-  )
+    }
 
-  useEffect(() => {
-    const el = elementRef.current
-    if (!el) return
     el.addEventListener('touchstart', handleTouchStart, { passive: false })
     el.addEventListener('touchmove', handleTouchMove, { passive: false })
     el.addEventListener('touchend', handleTouchEnd, { passive: false })
@@ -80,5 +90,5 @@ export function useSwipe({ onMove, enabled, elementRef }: UseSwipeProps) {
       el.removeEventListener('touchmove', handleTouchMove)
       el.removeEventListener('touchend', handleTouchEnd)
     }
-  }, [elementRef, handleTouchStart, handleTouchMove, handleTouchEnd])
+  }, [elementRef])
 }

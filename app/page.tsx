@@ -13,31 +13,39 @@ import { GameOverModal } from '@/components/game/GameOverModal'
 import { ConfirmModal } from '@/components/game/ConfirmModal'
 import { SwipeIndicator } from '@/components/game/SwipeIndicator'
 import { Instructions } from '@/components/game/Instructions'
-import { Direction, GridSize } from '@/types/game'
+import { Direction, GridSize, GameMode } from '@/types/game'
 import { DEFAULT_TIMER_SECONDS } from '@/constants/game'
+import { useI18n } from '@/hooks/use-i18n'
 
 function useBoardDimensions(gridSize: number) {
-  const [cellSize, setCellSize] = useState(80)
-  const [gap, setGap] = useState(10)
+  const [dims, setDims] = useState({ cellSize: 80, gap: 12, padding: 8 })
 
   useEffect(() => {
     function calculate() {
       const vw = window.innerWidth
       const vh = window.innerHeight
-      const maxW = Math.min(vw - 32, 520)
-      const maxH = vh - 220
+      const maxW = Math.min(vw - 32, 540)
+      const maxH = vh - 210
       const available = Math.min(maxW, maxH)
-      const g = available < 360 ? 8 : 10
-      const size = Math.floor((available - (gridSize + 1) * g) / gridSize)
-      setCellSize(Math.max(40, Math.min(size, 120)))
-      setGap(g)
+      // Modest gap between cells; the outer frame (padding) is kept thinner
+      // than the gap so it doesn't look like a bulky border.
+      const gap = available < 360 ? 8 : available < 460 ? 10 : 12
+      const padding = Math.round(gap * 0.7)
+      const cellSize = Math.floor(
+        (available - (gridSize - 1) * gap - padding * 2) / gridSize
+      )
+      setDims({
+        cellSize: Math.max(40, Math.min(cellSize, 140)),
+        gap,
+        padding,
+      })
     }
     calculate()
     window.addEventListener('resize', calculate)
     return () => window.removeEventListener('resize', calculate)
   }, [gridSize])
 
-  return { cellSize, gap }
+  return dims
 }
 
 export default function GamePage() {
@@ -61,17 +69,21 @@ export default function GamePage() {
   } = useGameStore()
 
   const { resolvedTheme, toggleTheme } = useTheme()
+  const { t } = useI18n()
   const boardRef = useRef<HTMLDivElement>(null)
-  const { cellSize, gap } = useBoardDimensions(gridSize)
+  const { cellSize, gap, padding } = useBoardDimensions(gridSize)
 
   // Timer state
   const [timerSeconds, setTimerSeconds] = useState(DEFAULT_TIMER_SECONDS)
   const [timerStarted, setTimerStarted] = useState(false)
   const [timerGameOver, setTimerGameOver] = useState(false)
 
-  // Confirm modal state for grid change
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false)
-  const [pendingGridSize, setPendingGridSize] = useState<GridSize | null>(null)
+  // Confirm modal state for grid size / game mode change
+  const [pendingChange, setPendingChange] = useState<
+    | { type: 'grid'; value: GridSize }
+    | { type: 'mode'; value: GameMode }
+    | null
+  >(null)
 
   const isTimedMode = gameMode === 'timed'
   const isGameActive = !gameOver && !gameWon && !timerGameOver
@@ -118,29 +130,42 @@ export default function GamePage() {
   // Handle grid size change with confirmation
   const handleGridSizeChange = useCallback((newSize: GridSize) => {
     if (newSize === gridSize) return
-    
+
     // If game has progress (moveCount > 0), show confirmation
     if (moveCount > 0) {
-      setPendingGridSize(newSize)
-      setConfirmModalOpen(true)
+      setPendingChange({ type: 'grid', value: newSize })
     } else {
       setGridSize(newSize)
       handleNewGame()
     }
   }, [gridSize, moveCount, setGridSize, handleNewGame])
 
-  const handleConfirmGridChange = useCallback(() => {
-    if (pendingGridSize) {
-      setGridSize(pendingGridSize)
+  // Handle game mode change with confirmation
+  const handleGameModeChange = useCallback((newMode: GameMode) => {
+    if (newMode === gameMode) return
+
+    // If game has progress (moveCount > 0), show confirmation
+    if (moveCount > 0) {
+      setPendingChange({ type: 'mode', value: newMode })
+    } else {
+      setGameMode(newMode)
       handleNewGame()
     }
-    setConfirmModalOpen(false)
-    setPendingGridSize(null)
-  }, [pendingGridSize, setGridSize, handleNewGame])
+  }, [gameMode, moveCount, setGameMode, handleNewGame])
 
-  const handleCancelGridChange = useCallback(() => {
-    setConfirmModalOpen(false)
-    setPendingGridSize(null)
+  const handleConfirmChange = useCallback(() => {
+    if (pendingChange?.type === 'grid') {
+      setGridSize(pendingChange.value)
+      handleNewGame()
+    } else if (pendingChange?.type === 'mode') {
+      setGameMode(pendingChange.value)
+      handleNewGame()
+    }
+    setPendingChange(null)
+  }, [pendingChange, setGridSize, setGameMode, handleNewGame])
+
+  const handleCancelChange = useCallback(() => {
+    setPendingChange(null)
   }, [])
 
   // Handle timer seconds change
@@ -174,7 +199,7 @@ export default function GamePage() {
           onUndo={undo}
           onToggleTheme={toggleTheme}
           onGridSizeChange={handleGridSizeChange}
-          onGameModeChange={setGameMode}
+          onGameModeChange={handleGameModeChange}
           onTimerSecondsChange={handleTimerSecondsChange}
         />
 
@@ -187,7 +212,7 @@ export default function GamePage() {
           aria-live="polite"
           aria-atomic="true"
         >
-          <Board tiles={tiles} cellSize={cellSize} gap={gap} gridSize={gridSize} />
+          <Board tiles={tiles} cellSize={cellSize} gap={gap} padding={padding} gridSize={gridSize} />
         </motion.div>
 
         <SwipeIndicator />
@@ -206,13 +231,13 @@ export default function GamePage() {
       />
 
       <ConfirmModal
-        open={confirmModalOpen}
-        title="Cambiar tamaño de grid"
-        message="Al cambiar el tamaño del grid se iniciará un nuevo juego y perderás todo el progreso actual. ¿Deseas continuar?"
-        confirmText="Aceptar"
-        cancelText="Cancelar"
-        onConfirm={handleConfirmGridChange}
-        onCancel={handleCancelGridChange}
+        open={pendingChange !== null}
+        title={pendingChange?.type === 'mode' ? t('confirmModeTitle') : t('confirmGridTitle')}
+        message={pendingChange?.type === 'mode' ? t('confirmModeMessage') : t('confirmGridMessage')}
+        confirmText={t('accept')}
+        cancelText={t('cancel')}
+        onConfirm={handleConfirmChange}
+        onCancel={handleCancelChange}
       />
     </main>
   )

@@ -4,10 +4,12 @@ import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { RotateCcw, Undo2, Sun, Moon, Clock } from 'lucide-react'
 import { GridSize, GameMode } from '@/types/game'
+import { useI18n } from '@/hooks/use-i18n'
 import { ScoreCard } from './ScoreCard'
 import { GridSelector } from './GridSelector'
 import { GameModeSelector } from './GameModeSelector'
 import { TimerSelector } from './TimerSelector'
+import { LanguageSelector } from './LanguageSelector'
 
 interface HUDProps {
   score: number
@@ -48,6 +50,8 @@ export const HUD = memo(function HUD({
   onGameModeChange,
   onTimerSecondsChange,
 }: HUDProps) {
+  const { t } = useI18n()
+
   const formatTime = (ms: number) => {
     const totalSeconds = Math.ceil(ms / 1000)
     const mins = Math.floor(totalSeconds / 60)
@@ -75,7 +79,8 @@ export const HUD = memo(function HUD({
             className="text-4xl sm:text-5xl font-black leading-none tracking-tight"
             style={{ color: 'var(--foreground)' }}
           >
-            4096
+            <span aria-hidden="true">4096</span>
+            <span className="sr-only">4096 Dark — the number tile puzzle game</span>
           </h1>
           <p className="text-xs font-semibold" style={{ color: 'var(--muted-foreground)' }}>
             Dark
@@ -88,8 +93,8 @@ export const HUD = memo(function HUD({
           transition={{ duration: 0.4, delay: 0.1 }}
           className="flex gap-2"
         >
-          <ScoreCard label="Score" value={score} />
-          <ScoreCard label="Best" value={bestScore} />
+          <ScoreCard label={t('score')} value={score} />
+          <ScoreCard label={t('best')} value={bestScore} />
         </motion.div>
       </div>
 
@@ -110,8 +115,10 @@ export const HUD = memo(function HUD({
       {/* Bottom row: subtitle + action buttons + timer */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <p className="text-xs sm:text-sm" style={{ color: 'var(--muted-foreground)' }}>
-          Join the numbers and get to the{' '}
-          <strong style={{ color: 'var(--foreground)' }}>4096 tile!</strong>
+          {t('tagline').split('4096')[0]}
+          <strong style={{ color: 'var(--foreground)' }}>
+            4096{t('tagline').split('4096')[1] ?? ''}
+          </strong>
         </p>
 
         <div className="flex items-center gap-1.5 shrink-0">
@@ -132,7 +139,7 @@ export const HUD = memo(function HUD({
                 backgroundColor: 'var(--muted)',
                 color: timeRemaining < 10000 ? '#ff6b6b' : 'var(--foreground)'
               }}
-              title="Tiempo restante"
+              title={t('timeLeftTitle')}
             >
               <Clock className="w-3.5 h-3.5" />
               <span>{formatTime(timeRemaining)}</span>
@@ -143,7 +150,7 @@ export const HUD = memo(function HUD({
           <div
             className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold"
             style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)' }}
-            title="Total moves"
+            title={t('movesTitle')}
           >
             <span>{moveCount}</span>
           </div>
@@ -154,19 +161,22 @@ export const HUD = memo(function HUD({
             disabled={!canUndo}
             className="p-2 rounded-xl transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
             style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)' }}
-            aria-label="Undo last move"
-            title="Undo"
+            aria-label={t('undoTitle')}
+            title={t('undoTitle')}
           >
             <Undo2 className="w-4 h-4" />
           </button>
+
+          {/* Language selector */}
+          <LanguageSelector />
 
           {/* Theme toggle */}
           <button
             onClick={onToggleTheme}
             className="p-2 rounded-xl transition-all active:scale-90"
             style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)' }}
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            title="Toggle theme"
+            aria-label={isDark ? t('themeToLight') : t('themeToDark')}
+            title={isDark ? t('themeToLight') : t('themeToDark')}
           >
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
@@ -176,10 +186,10 @@ export const HUD = memo(function HUD({
             onClick={onNewGame}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-90"
             style={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }}
-            aria-label="Start new game"
+            aria-label={t('newGame')}
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            New Game
+            {t('newGame')}
           </button>
         </div>
       </div>

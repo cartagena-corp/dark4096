@@ -1,14 +1,14 @@
 'use client'
 
-import { memo } from 'framer-motion'
+import { memo } from 'react'
 import { motion } from 'framer-motion'
-
-const HOW_TO_ITEMS = [
-  { keys: ['↑ ↓ ← →', 'W A S D'], label: 'Move tiles' },
-  { keys: ['Swipe'], label: 'Mobile' },
-]
+import { useI18n } from '@/hooks/use-i18n'
 
 export const Instructions = memo(function Instructions() {
+  const { t } = useI18n()
+  const body = t('howToPlayBody')
+  const [before, after] = body.split('4096')
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -17,16 +17,16 @@ export const Instructions = memo(function Instructions() {
       className="w-full"
     >
       <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-        <strong style={{ color: 'var(--foreground)' }}>HOW TO PLAY:</strong>{' '}
-        Use your{' '}
-        <strong style={{ color: 'var(--foreground)' }}>arrow keys</strong>{' '}
-        or{' '}
-        <strong style={{ color: 'var(--foreground)' }}>WASD</strong>{' '}
-        to move the tiles. When two tiles with the same number touch, they{' '}
-        <strong style={{ color: 'var(--foreground)' }}>merge into one!</strong>{' '}
-        Reach the{' '}
-        <strong style={{ color: 'var(--primary)' }}>4096 tile</strong>{' '}
-        to win.
+        <strong style={{ color: 'var(--foreground)' }}>{t('howToPlayTitle')}</strong>{' '}
+        {after !== undefined ? (
+          <>
+            {before}
+            <strong style={{ color: 'var(--primary)' }}>4096</strong>
+            {after}
+          </>
+        ) : (
+          body
+        )}
       </p>
     </motion.div>
   )

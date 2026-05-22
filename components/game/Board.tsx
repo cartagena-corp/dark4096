@@ -23,10 +23,14 @@ const TileCell = memo(function TileCell({ tile, cellSize, gap }: TileCellProps) 
   const prevY = (tile.prevRow ?? tile.row) * (cellSize + gap)
   const didMove = prevX !== x || prevY !== y
 
-  // Determine initial position for animation
+  // Determine initial position for animation (only applied on mount)
   const getInitial = () => {
     if (tile.isNew) {
       return { scale: 0, opacity: 0, x, y }
+    }
+    if (tile.isMerged) {
+      // Merged tiles mount fresh — give them a quick pop at their position
+      return { scale: 0.86, opacity: 1, x, y }
     }
     if (didMove) {
       return { scale: 1, opacity: 1, x: prevX, y: prevY }
@@ -35,16 +39,16 @@ const TileCell = memo(function TileCell({ tile, cellSize, gap }: TileCellProps) 
     return { scale: 1, opacity: 1, x, y }
   }
 
-  // Determine transition based on tile state
+  // Snappy transitions — tuned for maximum responsiveness
   const getTransition = () => {
     if (tile.isNew) {
-      return { duration: 0.15 }
+      return { duration: 0.085, ease: 'backOut' as const }
     }
     if (tile.isMerged) {
-      return { duration: 0.12 }
+      return { duration: 0.1, ease: 'backOut' as const }
     }
     if (didMove) {
-      return { duration: 0.1 }
+      return { duration: 0.07, ease: 'easeOut' as const }
     }
     // No movement - instant (no transition)
     return { duration: 0 }
@@ -71,10 +75,10 @@ const TileCell = memo(function TileCell({ tile, cellSize, gap }: TileCellProps) 
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        textAlign: 'center',
         fontWeight: 800,
-        letterSpacing: '-0.02em',
         lineHeight: 1,
-        willChange: didMove || tile.isNew ? 'transform' : 'auto',
+        willChange: 'transform',
         zIndex: tile.isMerged ? 10 : tile.isNew ? 5 : 1,
       }}
       className={colors.size}
@@ -89,12 +93,12 @@ interface BoardProps {
   tiles: Tile[]
   cellSize: number
   gap: number
+  padding: number
   gridSize: GridSize
 }
 
-export const Board = memo(function Board({ tiles, cellSize, gap, gridSize }: BoardProps) {
+export const Board = memo(function Board({ tiles, cellSize, gap, padding, gridSize }: BoardProps) {
   const boardSize = gridSize * cellSize + (gridSize - 1) * gap
-  const padding = gap
 
   return (
     <div

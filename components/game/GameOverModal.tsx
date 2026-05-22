@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { RotateCcw, Trophy } from 'lucide-react'
 import { GridSize, GameMode } from '@/types/game'
+import { useI18n } from '@/hooks/use-i18n'
 import { Leaderboard } from './Leaderboard'
 
 interface GameOverModalProps {
@@ -26,6 +27,7 @@ export function GameOverModal({
   onRetry,
   onContinue,
 }: GameOverModalProps) {
+  const { t } = useI18n()
   return (
     <AnimatePresence>
       {open && (
@@ -38,7 +40,7 @@ export function GameOverModal({
           style={{ backdropFilter: 'blur(8px)', backgroundColor: 'oklch(0 0 0 / 0.4)' }}
           aria-modal="true"
           role="dialog"
-          aria-label={won ? 'You win!' : 'Game over'}
+          aria-label={won ? t('win') : t('gameOver')}
         >
           <motion.div
             initial={{ scale: 0.85, opacity: 0, y: 20 }}
@@ -69,7 +71,7 @@ export function GameOverModal({
               className="text-center text-3xl font-black mb-1"
               style={{ color: 'var(--foreground)' }}
             >
-              {won ? 'You Win!' : 'Game Over'}
+              {won ? t('win') : t('gameOver')}
             </motion.h2>
 
             {won && (
@@ -80,7 +82,7 @@ export function GameOverModal({
                 className="text-center text-sm mb-4"
                 style={{ color: 'var(--muted-foreground)' }}
               >
-                You reached the 4096 tile!
+                {t('winSubtitle')}
               </motion.p>
             )}
 
@@ -96,7 +98,7 @@ export function GameOverModal({
                 style={{ backgroundColor: 'var(--muted)' }}
               >
                 <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted-foreground)' }}>
-                  Score
+                  {t('score')}
                 </span>
                 <span className="text-2xl font-black" style={{ color: 'var(--foreground)' }}>
                   {score.toLocaleString()}
@@ -107,7 +109,7 @@ export function GameOverModal({
                 style={{ backgroundColor: 'var(--muted)' }}
               >
                 <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted-foreground)' }}>
-                  Best
+                  {t('best')}
                 </span>
                 <span className="text-2xl font-black" style={{ color: 'var(--foreground)' }}>
                   {bestScore.toLocaleString()}
@@ -140,9 +142,9 @@ export function GameOverModal({
                     backgroundColor: 'var(--accent)',
                     color: 'var(--accent-foreground)',
                   }}
-                  aria-label="Continue playing"
+                  aria-label={t('keepGoing')}
                 >
-                  Keep Going
+                  {t('keepGoing')}
                 </button>
               )}
               <button
@@ -152,10 +154,10 @@ export function GameOverModal({
                   backgroundColor: 'var(--primary)',
                   color: 'var(--primary-foreground)',
                 }}
-                aria-label="Start a new game"
+                aria-label={t('newGame')}
               >
                 <RotateCcw className="w-4 h-4" />
-                New Game
+                {t('newGame')}
               </button>
             </motion.div>
           </motion.div>

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Trophy } from 'lucide-react'
 import { GridSize, GameMode } from '@/types/game'
 import { getLeaderboardByMode, LeaderboardEntry } from '@/lib/storage/persist'
+import { useI18n } from '@/hooks/use-i18n'
 
 interface LeaderboardProps {
   gridSize: GridSize
@@ -17,6 +18,7 @@ export const Leaderboard = memo(function Leaderboard({
   gameMode,
   className = '',
 }: LeaderboardProps) {
+  const { t } = useI18n()
   const [scores, setScores] = useState<LeaderboardEntry[]>([])
   const [loaded, setLoaded] = useState(false)
 
@@ -40,7 +42,7 @@ export const Leaderboard = memo(function Leaderboard({
       <div className="flex items-center gap-2 mb-3">
         <Trophy className="w-4 h-4" style={{ color: 'var(--accent)' }} />
         <h3 className="text-sm font-bold" style={{ color: 'var(--foreground)' }}>
-          Top Scores
+          {t('topScores')}
         </h3>
       </div>
 

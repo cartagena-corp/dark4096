@@ -13,6 +13,7 @@ export const STORAGE_KEYS = {
   GRID_SIZE: '4096_grid_size',
   GAME_MODE: '4096_game_mode',
   LEADERBOARD: '4096_leaderboard',
+  LOCALE: '4096_locale',
 } as const
 
 // Probability of spawning a 4 instead of a 2

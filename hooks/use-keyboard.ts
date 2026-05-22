@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import { Direction } from '@/types/game'
 
 interface UseKeyboardProps {
@@ -9,9 +9,17 @@ interface UseKeyboardProps {
 }
 
 export function useKeyboard({ onMove, enabled }: UseKeyboardProps) {
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (!enabled) return
+  // Keep the latest callback/flag in refs so the listener can be bound a
+  // single time. Re-binding on every move opens a window where a keypress
+  // can land between unbind and rebind — a dropped move.
+  const onMoveRef = useRef(onMove)
+  const enabledRef = useRef(enabled)
+  onMoveRef.current = onMove
+  enabledRef.current = enabled
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!enabledRef.current) return
 
       let direction: Direction | null = null
 
@@ -40,14 +48,11 @@ export function useKeyboard({ onMove, enabled }: UseKeyboardProps) {
 
       if (direction) {
         e.preventDefault()
-        onMove(direction)
+        onMoveRef.current(direction)
       }
-    },
-    [onMove, enabled]
-  )
+    }
 
-  useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleKeyDown])
+  }, [])
 }

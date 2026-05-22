@@ -4,6 +4,7 @@ import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { GridSize } from '@/types/game'
 import { GRID_SIZES } from '@/constants/game'
+import { useI18n } from '@/hooks/use-i18n'
 
 interface GridSelectorProps {
   selected: GridSize
@@ -16,9 +17,10 @@ export const GridSelector = memo(function GridSelector({
   onChange,
   disabled = false,
 }: GridSelectorProps) {
+  const { t } = useI18n()
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs font-semibold text-muted-foreground">Grid:</span>
+      <span className="text-xs font-semibold text-muted-foreground">{t('grid')}:</span>
       <div className="flex gap-1.5">
         {GRID_SIZES.map((size) => (
           <motion.button

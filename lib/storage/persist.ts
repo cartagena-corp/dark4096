@@ -1,5 +1,6 @@
 import { GameState, ThemeMode, GridSize, GameMode } from '@/types/game'
 import { STORAGE_KEYS, DEFAULT_GRID_SIZE } from '@/constants/game'
+import { Locale, LOCALES } from '@/lib/i18n/translations'
 
 function bestScoreKey(gridSize: GridSize, gameMode: GameMode): string {
   return `${STORAGE_KEYS.BEST_SCORE}_${gridSize}_${gameMode}`
@@ -87,6 +88,23 @@ export function loadGameMode(): GameMode {
     return 'classic'
   } catch {
     return 'classic'
+  }
+}
+
+export function saveLocale(locale: Locale): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.LOCALE, locale)
+  } catch { /* ignore */ }
+}
+
+/** Returns the manually chosen locale, or null if the user never picked one. */
+export function loadLocale(): Locale | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.LOCALE)
+    if (val && (LOCALES as string[]).includes(val)) return val as Locale
+    return null
+  } catch {
+    return null
   }
 }
 

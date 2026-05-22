@@ -3,6 +3,7 @@
 import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { GameMode } from '@/types/game'
+import { useI18n } from '@/hooks/use-i18n'
 
 interface GameModeSelectorProps {
   selected: GameMode
@@ -15,14 +16,15 @@ export const GameModeSelector = memo(function GameModeSelector({
   onChange,
   disabled = false,
 }: GameModeSelectorProps) {
+  const { t } = useI18n()
   const modes: { mode: GameMode; label: string; description: string }[] = [
-    { mode: 'classic', label: 'Classic', description: 'No time limit' },
-    { mode: 'timed', label: 'Timed', description: '90 seconds' },
+    { mode: 'classic', label: t('modeClassic'), description: t('modeClassicDesc') },
+    { mode: 'timed', label: t('modeTimed'), description: t('modeTimedDesc') },
   ]
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs font-semibold text-muted-foreground">Mode:</span>
+      <span className="text-xs font-semibold text-muted-foreground">{t('mode')}:</span>
       <div className="flex gap-1.5">
         {modes.map(({ mode, label }) => (
           <motion.button

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Clock, ChevronDown } from 'lucide-react'
 import { TIMER_PRESETS } from '@/constants/game'
+import { useI18n } from '@/hooks/use-i18n'
 
 interface TimerSelectorProps {
   value: number
@@ -11,6 +12,7 @@ interface TimerSelectorProps {
 }
 
 export function TimerSelector({ value, onChange, disabled = false }: TimerSelectorProps) {
+  const { t } = useI18n()
   const [isOpen, setIsOpen] = useState(false)
   const [inputValue, setInputValue] = useState(String(value))
   const containerRef = useRef<HTMLDivElement>(null)
@@ -89,7 +91,7 @@ export function TimerSelector({ value, onChange, disabled = false }: TimerSelect
           disabled={disabled}
           className="w-10 bg-transparent text-center text-sm font-bold outline-none disabled:opacity-50"
           style={{ color: 'var(--foreground)' }}
-          title="Segundos (10-600)"
+          title={t('timerInputTitle')}
         />
         
         <span className="text-xs font-medium pr-1" style={{ color: 'var(--muted-foreground)' }}>
@@ -100,7 +102,7 @@ export function TimerSelector({ value, onChange, disabled = false }: TimerSelect
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
           className="p-1.5 pr-2 hover:bg-black/10 dark:hover:bg-white/10 transition-colors disabled:opacity-50"
-          aria-label="Seleccionar tiempo predefinido"
+          aria-label={t('timerPresetTitle')}
         >
           <ChevronDown 
             className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`}
