@@ -2,7 +2,7 @@
 
 export type Direction = 'up' | 'down' | 'left' | 'right'
 export type GridSize = 3 | 4 | 5
-export type GameMode = 'classic' | 'timed'
+export type GameMode = 'classic' | 'timed' | 'fluid'
 
 export interface Position {
   row: number

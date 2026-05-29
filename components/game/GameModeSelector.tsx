@@ -20,6 +20,7 @@ export const GameModeSelector = memo(function GameModeSelector({
   const modes: { mode: GameMode; label: string; description: string }[] = [
     { mode: 'classic', label: t('modeClassic'), description: t('modeClassicDesc') },
     { mode: 'timed', label: t('modeTimed'), description: t('modeTimedDesc') },
+    { mode: 'fluid', label: t('modeFluid'), description: t('modeFluidDesc') },
   ]
 
   return (

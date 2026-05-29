@@ -54,6 +54,110 @@ export function spawnTile(board: (Tile | null)[][], gridSize: GridSize): { board
   return { board: newBoard, tile }
 }
 
+function getAdjacentEmptyCell(board: (Tile | null)[][], gridSize: GridSize, targetValue: number): { row: number; col: number } | null {
+  const empty = getEmptyCells(board, gridSize)
+  const dr = [-1, 1, 0, 0]
+  const dc = [0, 0, -1, 1]
+  
+  // Shuffle empty cells so we don't always pick the same direction
+  const shuffled = [...empty].sort(() => Math.random() - 0.5)
+
+  for (const pos of shuffled) {
+    for (let i = 0; i < 4; i++) {
+      const nr = pos.row + dr[i]
+      const nc = pos.col + dc[i]
+      if (nr >= 0 && nr < gridSize && nc >= 0 && nc < gridSize) {
+        if (board[nr][nc]?.value === targetValue) {
+          return pos
+        }
+      }
+    }
+  }
+  return null
+}
+
+function getMaxSpaceEmptyCell(board: (Tile | null)[][], gridSize: GridSize): { row: number; col: number } | null {
+  const empty = getEmptyCells(board, gridSize)
+  if (empty.length === 0) return null
+
+  const dr = [-1, 1, 0, 0]
+  const dc = [0, 0, -1, 1]
+
+  let maxSpace = -1
+  let bestCells: { row: number; col: number }[] = []
+
+  for (const pos of empty) {
+    let space = 0
+    for (let i = 0; i < 4; i++) {
+      const nr = pos.row + dr[i]
+      const nc = pos.col + dc[i]
+      if (nr >= 0 && nr < gridSize && nc >= 0 && nc < gridSize) {
+        if (!board[nr][nc]) {
+          space++
+        }
+      }
+    }
+    if (space > maxSpace) {
+      maxSpace = space
+      bestCells = [pos]
+    } else if (space === maxSpace) {
+      bestCells.push(pos)
+    }
+  }
+
+  if (bestCells.length > 0) {
+    return bestCells[Math.floor(Math.random() * bestCells.length)]
+  }
+  return empty[Math.floor(Math.random() * empty.length)]
+}
+
+export function spawnFluidTile(board: (Tile | null)[][], gridSize: GridSize, isStart: boolean = false): { board: (Tile | null)[][]; tile: Tile | null } {
+  const empty = getEmptyCells(board, gridSize)
+  if (empty.length === 0) return { board, tile: null }
+
+  let pos: { row: number; col: number } | null = null
+  let value = Math.random() < SPAWN_4_PROBABILITY ? 4 : 2
+
+  if (isStart) {
+    value = Math.random() < 0.9 ? 2 : 4
+    pos = getMaxSpaceEmptyCell(board, gridSize)
+  } else {
+    const cell2 = getAdjacentEmptyCell(board, gridSize, 2)
+    const cell4 = getAdjacentEmptyCell(board, gridSize, 4)
+
+    if (!cell2 && !cell4) {
+      value = Math.random() < 0.5 ? 2 : 4
+      pos = getMaxSpaceEmptyCell(board, gridSize)
+    } else if (!cell2) {
+      value = 4
+      pos = cell4
+    } else if (!cell4) {
+      value = 2
+      pos = cell2
+    } else {
+      value = Math.random() < 0.5 ? 2 : 4
+      pos = value === 2 ? cell2 : cell4
+    }
+  }
+
+  if (!pos) {
+    pos = empty[Math.floor(Math.random() * empty.length)]
+  }
+
+  const tile: Tile = {
+    id: generateId(),
+    value,
+    row: pos.row,
+    col: pos.col,
+    isNew: true,
+    isMerged: false,
+  }
+
+  const newBoard = board.map(row => [...row])
+  newBoard[pos.row][pos.col] = tile
+  return { board: newBoard, tile }
+}
+
 /** Slide a single row/column to the left, returns {line, score, moved} */
 function slideLeft(line: (Tile | null)[], gridSize: GridSize): { line: (Tile | null)[]; score: number; moved: boolean } {
   const tiles = line.filter(Boolean) as Tile[]
@@ -118,7 +222,7 @@ export interface MoveResult {
   gameWon: boolean
 }
 
-export function applyMove(tiles: Tile[], direction: Direction, gridSize: GridSize): MoveResult {
+export function applyMove(tiles: Tile[], direction: Direction, gridSize: GridSize, gameMode: GameMode = 'classic'): MoveResult {
   // Store previous positions for animation tracking
   const prevPositions = new Map<string, { row: number; col: number }>()
   for (const tile of tiles) {
@@ -178,7 +282,9 @@ export function applyMove(tiles: Tile[], direction: Direction, gridSize: GridSiz
     }
   }
 
-  const { board: boardWithNew, tile: newTile } = spawnTile(board, gridSize)
+  const { board: boardWithNew, tile: newTile } = gameMode === 'fluid' 
+    ? spawnFluidTile(board, gridSize, false) 
+    : spawnTile(board, gridSize)
   const finalTiles: Tile[] = updatedTiles
   if (newTile) {
     finalTiles.push(newTile)
@@ -220,9 +326,16 @@ export function hasMovesLeft(board: (Tile | null)[][], gridSize: GridSize): bool
 
 export function initGame(bestScore = 0, gridSize: GridSize = 4, gameMode: GameMode = 'classic'): GameState {
   let board = createEmptyBoard(gridSize)
-  const { board: b1 } = spawnTile(board, gridSize)
-  const { board: b2 } = spawnTile(b1, gridSize)
-  board = b2
+  
+  if (gameMode === 'fluid') {
+    const { board: b1 } = spawnFluidTile(board, gridSize, true)
+    const { board: b2 } = spawnFluidTile(b1, gridSize, true)
+    board = b2
+  } else {
+    const { board: b1 } = spawnTile(board, gridSize)
+    const { board: b2 } = spawnTile(b1, gridSize)
+    board = b2
+  }
 
   const tiles: Tile[] = []
   for (let r = 0; r < gridSize; r++) {

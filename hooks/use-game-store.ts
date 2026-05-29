@@ -95,7 +95,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const snapshot = snapshotHistory({ tiles, score, moveCount: get().moveCount, gameOver, gameWon, continued, history, board: [], bestScore, gridSize, gameMode })
 
-    const result = applyMove(tiles, direction, gridSize)
+    const result = applyMove(tiles, direction, gridSize, gameMode)
     if (!result.moved) return
 
     const newScore = score + result.score
