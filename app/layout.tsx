@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Nunito } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { I18nProvider } from '@/hooks/use-i18n'
+import { PostHogProvider } from '@/components/posthog-provider'
 import { getSiteUrl, SITE_NAME } from '@/lib/seo'
 import './globals.css'
 
@@ -150,8 +151,10 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased" suppressHydrationWarning>
-        <I18nProvider>{children}</I18nProvider>
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+        <PostHogProvider>
+          <I18nProvider>{children}</I18nProvider>
+          {process.env.NODE_ENV === 'production' && <Analytics />}
+        </PostHogProvider>
       </body>
     </html>
   )
