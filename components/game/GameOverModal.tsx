@@ -15,6 +15,8 @@ interface GameOverModalProps {
   gameMode: GameMode
   onRetry: () => void
   onContinue?: () => void
+  onUndo?: () => void
+  canUndo?: boolean
 }
 
 export function GameOverModal({
@@ -26,6 +28,8 @@ export function GameOverModal({
   gameMode,
   onRetry,
   onContinue,
+  onUndo,
+  canUndo,
 }: GameOverModalProps) {
   const { t } = useI18n()
   return (
@@ -159,6 +163,21 @@ export function GameOverModal({
                 <RotateCcw className="w-4 h-4" />
                 {t('newGame')}
               </button>
+              {onUndo && canUndo && (
+                <button
+                  onClick={onUndo}
+                  className="w-full py-3 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all active:scale-95 border"
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: 'var(--foreground)',
+                    borderColor: 'var(--border)',
+                  }}
+                  aria-label={t('undoTitle')}
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  {t('undoTitle')}
+                </button>
+              )}
             </motion.div>
           </motion.div>
         </motion.div>

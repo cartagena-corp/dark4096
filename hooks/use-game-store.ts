@@ -117,7 +117,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       moveCount: newMoveCount,
       gameOver: newGameOver,
       gameWon: newGameWon,
-      history: [snapshot],
+      history: [...history, snapshot].slice(-5),
     })
 
     // Save to localStorage

@@ -115,6 +115,11 @@ export default function GamePage() {
     startNewGame()
   }, [startNewGame])
 
+  const handleUndo = useCallback(() => {
+    undo()
+    setTimerGameOver(false)
+  }, [undo])
+
   // Handle move - start timer on first move in timed mode
   const handleMove = useCallback((direction: Direction) => {
     if (!isGameActive) return
@@ -196,7 +201,7 @@ export default function GamePage() {
           isDark={resolvedTheme === 'dark'}
           gameOver={gameOver || timerGameOver}
           onNewGame={handleNewGame}
-          onUndo={undo}
+          onUndo={handleUndo}
           onToggleTheme={toggleTheme}
           onGridSizeChange={handleGridSizeChange}
           onGameModeChange={handleGameModeChange}
@@ -228,6 +233,8 @@ export default function GamePage() {
         gameMode={gameMode}
         onRetry={handleNewGame}
         onContinue={gameWon ? continueGame : undefined}
+        onUndo={handleUndo}
+        canUndo={history.length > 0}
       />
 
       <ConfirmModal
